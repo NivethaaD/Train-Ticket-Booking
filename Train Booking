@@ -1,0 +1,234 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+class TicketBooking {
+public:
+    string name;
+    int age;
+    char berth;
+    int totBerths = 3;
+    int lowerBerths = 1, middleBerths = 1, upperBerth = 1;
+    int RAC_Tickets = 1;
+    int waitingListTickets = 1;
+    unordered_map<int, vector<string>> mp;
+    static int id;
+    queue<pair<int, vector<string>>> qr;
+    queue<pair<int, vector<string>>> wq;
+
+    void setDetails(string name, int age, char berth) {
+        this->name = name;
+        this->age = age;
+        this->berth = berth;
+        bool success = false;
+
+        if (berth == 'L' && lowerBerths > 0) {
+            lowerBerths--;
+            success = true;
+        } else if (berth == 'M' && middleBerths > 0) {
+            middleBerths--;
+            success = true;
+        } else if (berth == 'U' && upperBerth > 0) {
+            upperBerth--;
+            success = true;
+        } else if (lowerBerths > 0) {
+            berth = 'L';
+            lowerBerths--;
+            success = true;
+        } else if (middleBerths > 0) {
+            berth = 'M';
+            middleBerths--;
+            success = true;
+        } else if (upperBerth > 0) {
+            berth = 'U';
+            upperBerth--;
+            success = true;
+        } else if (RAC_Tickets > 0) {
+            berth = 'R';
+            RAC_Tickets--;
+            success = true;
+        } else if (waitingListTickets > 0) {
+            berth = 'W';
+            waitingListTickets--;
+            success = true;
+        } else {
+            cout << "No tickets available in any category. Please try again later." << endl;
+            return;
+        }
+
+        vector<string> temp = {name, to_string(age), string(1, berth)};
+        mp[id] = temp;
+        if (berth == 'R') qr.push({id, temp});
+        if (berth == 'W') wq.push({id, temp});
+        cout << "You've successfully booked the ticket and your ID is " << id << endl;
+        id++;
+    }
+
+    void availableTickets() {
+        cout << endl;
+        cout << "These are the available seats that you can prefer" << endl;
+        cout << "The lower berth seats are: " << lowerBerths << endl;
+        cout << "The middle berth seats are: " << middleBerths << endl;
+        cout << "The upper berth seats are: " << upperBerth << endl;
+        cout << "The available RAC Tickets are: " << RAC_Tickets << endl;
+        cout << "The available waiting list Tickets are: " << waitingListTickets << endl;
+        cout << endl;
+    }
+
+    void bookedTickets() {
+        cout << "Total number of booked tickets: " << mp.size() << endl;
+        cout << "Name\t" << "Age\t" << "Berth" << endl;
+        for (auto &i : mp) {
+            for (auto &j : i.second) {
+                cout << j << " ";
+            }
+            cout << endl;
+        }
+    }
+
+    void cancelTickets() {
+        cout << "Please enter your ID to cancel the ticket: ";
+        int id;
+        cin >> id;
+        if (mp.find(id) == mp.end()) {
+            cout << "Invalid ID. Ticket not found." << endl;
+            return;
+        }
+
+        char b = mp[id][2][0];
+        mp.erase(id);
+
+        if (b == 'L') {
+            lowerBerths++;
+            if (!qr.empty()) {
+                auto p = qr.front();
+                qr.pop();
+                int tempId = p.first;
+                auto tempStr = p.second;
+                tempStr[2] = 'L';
+                mp[tempId] = tempStr;
+                lowerBerths--;
+                RAC_Tickets++;
+            }
+            if (!wq.empty()) {
+                auto p = wq.front();
+                wq.pop();
+                int tempId = p.first;
+                auto tempStr = p.second;
+                tempStr[2] = 'R';
+                mp[tempId] = tempStr;
+                RAC_Tickets--;
+                waitingListTickets++;
+            }
+        } else if (b == 'M') {
+            middleBerths++;
+            if (!qr.empty()) {
+                auto p = qr.front();
+                qr.pop();
+                int tempId = p.first;
+                auto tempStr = p.second;
+                tempStr[2] = 'M';
+                mp[tempId] = tempStr;
+                middleBerths--;
+                RAC_Tickets++;
+            } 
+            if (!wq.empty()) {
+                auto p = wq.front();
+                wq.pop();
+                int tempId = p.first;
+                auto tempStr = p.second;
+                tempStr[2] = 'R';
+                mp[tempId] = tempStr;
+                RAC_Tickets--;
+                waitingListTickets++;
+            }
+        } else if (b == 'U') {
+            upperBerth++;
+            if (!qr.empty()) {
+                auto p = qr.front();
+                qr.pop();
+                int tempId = p.first;
+                auto tempStr = p.second;
+                tempStr[2] = 'U';
+                mp[tempId] = tempStr;
+                upperBerth--;
+                RAC_Tickets++;
+            }
+            if (!wq.empty()) {
+                auto p = wq.front();
+                wq.pop();
+                int tempId = p.first;
+                auto tempStr = p.second;
+                tempStr[2] = 'R';
+                mp[tempId] = tempStr;
+                RAC_Tickets--;
+                waitingListTickets++;
+            }
+        } 
+        else if (b == 'R') 
+        {
+            RAC_Tickets++;
+            if (!wq.empty()) 
+            {
+                auto p = wq.front();
+                wq.pop();
+                int tempId = p.first;
+                auto tempStr = p.second;
+                tempStr[2] = 'R';
+                mp[tempId] = tempStr;
+                waitingListTickets++;
+            }
+        } 
+        else if (b == 'W') {
+            waitingListTickets++;
+        }
+    }
+};
+
+int TicketBooking :: id=0;
+int main() {
+    int flag = 1;
+    TicketBooking book;
+    while (flag) {
+        cout << "----------------------------" << endl;
+        cout << "1. Book Ticket" << endl;
+        cout << "2. Cancel Ticket" << endl;
+        cout << "3. Available Tickets" << endl;
+        cout << "4. Booked Tickets" << endl;
+        cout << "5. Exit" << endl;
+        cout << "----------------------------" << endl;
+        int choice;
+        cin >> choice;
+        switch (choice) {
+            case 1: {
+                if (book.waitingListTickets > 0) {
+                    book.availableTickets();
+                    cout << "Enter the name, age, berth option (L - LOWER, M - MIDDLE, U - UPPER)" << endl;
+                    string name;
+                    int age;
+                    char berth;
+                    cin >> name >> age >> berth;
+                    book.setDetails(name, age, berth);
+                } else {
+                    cout << "Seats are filled already, so kindly visit the app later." << endl;
+                }
+                break;
+            }
+            case 2:
+                book.cancelTickets();
+                break;
+            case 3:
+                book.availableTickets();
+                break;
+            case 4:
+                book.bookedTickets();
+                break;
+            case 5:
+                return 0;
+            default:
+                cout << "Please enter a valid choice." << endl;
+                break;
+        }
+    }
+
+    return 0;
+}
